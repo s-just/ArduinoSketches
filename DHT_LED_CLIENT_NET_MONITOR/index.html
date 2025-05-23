@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature & Humidity Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #0056b3;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        strong {
+            color: #007bff;
+        }
+        .data-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #28a745;
+            margin: 15px 0;
+        }
+        .timestamp {
+            font-size: 0.9em;
+            color: #777;
+            margin-top: 20px;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Current DHT Readings</h1>
+        <p><span id="temperature" class="data-value">--.- C</span></p>
+        <p><span id="humidity" class="data-value">--.- %</span></p>
+        <p class="timestamp">Last Updated: <span id="timestamp">N/A</span></p>
+        <p id="error-message" class="error-message">Could not fetch data. Retrying...</p>
+    </div>
+
+    <script>
+        function fetchData() {
+            fetch('/latest_readings')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const tempElement = document.getElementById('temperature');
+                    const humidityElement = document.getElementById('humidity');
+                    const timestampElement = document.getElementById('timestamp');
+                    const errorMessageElement = document.getElementById('error-message');
+
+                    if (data.temperature !== null && data.humidity !== null) {
+                        tempElement.textContent = `${parseFloat(data.temperature).toFixed(1)} C`;
+                        humidityElement.textContent = `${parseFloat(data.humidity).toFixed(1)} %`;
+                        timestampElement.textContent = data.timestamp || 'N/A';
+                        errorMessageElement.style.display = 'none';
+                    } else {
+                        tempElement.textContent = "--.- C";
+                        humidityElement.textContent = "--.- %";
+                        timestampElement.textContent = "N/A";
+                        errorMessageElement.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    document.getElementById('error-message').style.display = 'block';
+                });
+        }
+
+        fetchData();
+        setInterval(fetchData, 5000);
+    </script>
+</body>
+</html>
